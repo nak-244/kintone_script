@@ -1,8 +1,6 @@
 (function() {
   'use strict';
 
-  kintone.events.on('app.record.create.show', (event) => {
-
   // レコードの取得
   var getRecords = function() {
     return new Promise(function(resolve, reject) {
@@ -73,5 +71,5 @@
   };
 
   main();
-});
+
 })();
