@@ -70,6 +70,10 @@
     });
   };
 
-  main();
+  // 新しいレコードが追加されたときに実行されるイベントハンドラを登録
+  kintone.events.on('app.record.create.submit', function(event) {
+    main(); // メインの処理を実行
+    return event;
+  });
 
 })();
