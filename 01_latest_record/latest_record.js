@@ -5,7 +5,7 @@
   var getRecords = function() {
     return new Promise(function(resolve, reject) {
       var params = {
-        app: アプリID,  // 対象のアプリのIDに置き換えてください
+        app: 479,  // 対象のアプリのIDに置き換えてください
         query: '',
         fields: ['$id', '企業ID', 'レコード番号'],
         totalCount: true
@@ -25,7 +25,7 @@
   var deleteRecord = function(recordId) {
     return new Promise(function(resolve, reject) {
       var params = {
-        app: アプリID,  // 対象のアプリのIDに置き換えてください
+        app: 479,  // 対象のアプリのIDに置き換えてください
         id: recordId
       };
 
