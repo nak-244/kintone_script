@@ -1,7 +1,7 @@
 (function() {
   'use strict';
 
-  kintone.events.on('app.record.edit.show', (event) => {
+  kintone.events.on('app.record.create.show', (event) => {
 
   // レコードの取得
   var getRecords = function() {
