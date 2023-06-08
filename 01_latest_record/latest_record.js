@@ -1,17 +1,17 @@
-(function() {
+(function () {
   'use strict';
 
   // レコードの取得
-  var getRecords = function() {
-    return new Promise(function(resolve, reject) {
+  var getRecords = function () {
+    return new Promise(function (resolve, reject) {
       var params = {
-        app: 479,  // 対象のアプリのIDに置き換えてください
+        app: kintone.app.getId(), // 現在のアプリのIDを取得
         query: '',
         fields: ['$id', '企業ID', 'レコード番号'],
-        totalCount: true
+        totalCount: true,
       };
 
-      kintone.api('/k/v1/records', 'GET', params, function(resp) {
+      kintone.api('/k/v1/records', 'GET', params, function (resp) {
         if (resp.records) {
           resolve(resp.records);
         } else {
@@ -22,14 +22,14 @@
   };
 
   // レコードの削除
-  var deleteRecord = function(recordId) {
-    return new Promise(function(resolve, reject) {
+  var deleteRecord = function (recordId) {
+    return new Promise(function (resolve, reject) {
       var params = {
-        app: 479,  // 対象のアプリのIDに置き換えてください
-        id: recordId
+        app: kintone.app.getId(), // 現在のアプリのIDを取得
+        id: recordId,
       };
 
-      kintone.api('/k/v1/record', 'DELETE', params, function(resp) {
+      kintone.api('/k/v1/record', 'DELETE', params, function (resp) {
         if (resp.id) {
           resolve();
         } else {
@@ -40,40 +40,53 @@
   };
 
   // メインの処理
-  var main = function() {
-    getRecords().then(function(records) {
-      // 企業IDでソート
-      records.sort(function(a, b) {
-        return a.企業ID.value - b.企業ID.value;
-      });
+  var main = function () {
+    getRecords()
+      .then(function (records) {
+        // 企業IDごとに最新のレコードを保持するオブジェクトを作成
+        var latestRecords = {};
 
-      var remainingRecords = [];
-
-      for (var i = 0; i < records.length - 1; i++) {
-        if (records[i].企業ID.value === records[i + 1].企業ID.value) {
-          if (records[i].レコード番号.value > records[i + 1].レコード番号.value) {
-            deleteRecord(records[i + 1].$id.value); // 次のレコードを削除
-          } else {
-            deleteRecord(records[i].$id.value); // 現在のレコードを削除
+        records.forEach(function (record) {
+          var companyId = record.企業ID.value;
+          if (
+            !latestRecords[companyId] ||
+            record.レコード番号.value > latestRecords[companyId].レコード番号.value
+          ) {
+            latestRecords[companyId] = record;
           }
-        } else {
-          remainingRecords.push(records[i]);
-        }
-      }
+        });
 
-      // 最後のレコードは必ず残す
-      remainingRecords.push(records[records.length - 1]);
+        // 削除対象のレコードIDを取得
+        var deleteRecordIds = records
+          .filter(function (record) {
+            var companyId = record.企業ID.value;
+            return (
+              latestRecords[companyId] &&
+              record.$id.value !== latestRecords[companyId].$id.value
+            );
+          })
+          .map(function (record) {
+            return record.$id.value;
+          });
 
-      console.log('処理が完了しました。');
-    }).catch(function(error) {
-      console.error('エラーが発生しました:', error);
-    });
+        // レコードの削除
+        var deletePromises = deleteRecordIds.map(function (recordId) {
+          return deleteRecord(recordId);
+        });
+
+        return Promise.all(deletePromises);
+      })
+      .then(function () {
+        console.log('処理が完了しました。');
+      })
+      .catch(function (error) {
+        console.error('エラーが発生しました:', error);
+      });
   };
 
-  // 新しいレコードが追加されたときに実行されるイベントハンドラを登録
-  kintone.events.on('app.record.create.submit', function(event) {
+  // 新しいレコードが追加または編集されたときに実行されるイベントハンドラを登録
+  kintone.events.on(['app.record.create.submit', 'app.record.edit.submit'], function (event) {
     main(); // メインの処理を実行
     return event;
   });
-
 })();
