@@ -1,92 +1,35 @@
 (function () {
   'use strict';
 
-  // レコードの取得
-  var getRecords = function () {
-    return new Promise(function (resolve, reject) {
-      var params = {
-        app: kintone.app.getId(), // 現在のアプリのIDを取得
-        query: '',
-        fields: ['$id', '企業ID', 'レコード番号'],
-        totalCount: true,
-      };
+  // 子アプリのレコードが追加された時のイベントをトリガーする
+  kintone.events.on('app.record.create.submit', function (event) {
+    var record = event.record;
+    var appIdChild = '479'; // 子アプリのApp IDを指定
+    var appIdParent = '481'; // 親アプリのApp IDを指定
 
-      kintone.api('/k/v1/records', 'GET', params, function (resp) {
-        if (resp.records) {
-          resolve(resp.records);
-        } else {
-          reject(resp.message);
-        }
-      });
-    });
-  };
+    // 親アプリに転記するデータを作成
+    var parentRecord = {};
 
-  // レコードの削除
-  var deleteRecord = function (recordId) {
-    return new Promise(function (resolve, reject) {
-      var params = {
-        app: kintone.app.getId(), // 現在のアプリのIDを取得
-        id: recordId,
-      };
+    // フィールドが存在するかチェックしてから転記
+    if (record['レコード番号']) {
+      parentRecord['レコード番号'] = { value: record['レコード番号'].value };
+    }
+    if (record['企業ID']) {
+      parentRecord['企業ID'] = { value: record['企業ID'].value };
+    }
+    if (record['会社名']) {
+      parentRecord['会社名'] = { value: record['会社名'].value };
+    }
+    // 必要なフィールドを追加
 
-      kintone.api('/k/v1/record', 'DELETE', params, function (resp) {
-        if (resp.id) {
-          resolve();
-        } else {
-          reject(resp.message);
-        }
-      });
-    });
-  };
-
-  // メインの処理
-  var main = function () {
-    getRecords()
-      .then(function (records) {
-        // 企業IDごとに最新のレコードを保持するオブジェクトを作成
-        var latestRecords = {};
-
-        records.forEach(function (record) {
-          var companyId = record.企業ID.value;
-          if (
-            !latestRecords[companyId] ||
-            record.レコード番号.value > latestRecords[companyId].レコード番号.value
-          ) {
-            latestRecords[companyId] = record;
-          }
-        });
-
-        // 削除対象のレコードIDを取得
-        var deleteRecordIds = records
-          .filter(function (record) {
-            var companyId = record.企業ID.value;
-            return (
-              latestRecords[companyId] &&
-              record.$id.value !== latestRecords[companyId].$id.value
-            );
-          })
-          .map(function (record) {
-            return record.$id.value;
-          });
-
-        // レコードの削除
-        var deletePromises = deleteRecordIds.map(function (recordId) {
-          return deleteRecord(recordId);
-        });
-
-        return Promise.all(deletePromises);
-      })
+    // 親アプリにレコードを追加
+    kintone.api('/k/v1/record', 'POST', { app: appIdParent, record: parentRecord })
       .then(function () {
-        console.log('処理が完了しました。');
+        console.log('親アプリへの転記が完了しました');
+        return event;
       })
       .catch(function (error) {
         console.error('エラーが発生しました:', error);
       });
-  };
-
-  // 新しいレコードが追加または編集されたときに実行されるイベントハンドラを登録
-  kintone.events.on(['app.record.create.submit', 'app.record.edit.submit'], function (event) {
-    main(); // メインの処理を実行
-    return event;
   });
 })();
