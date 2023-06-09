@@ -1,35 +1,27 @@
-(function () {
+(function() {
   'use strict';
 
-  // 子アプリのレコードが追加された時のイベントをトリガーする
-  kintone.events.on('app.record.create.submit', function (event) {
-    var record = event.record;
-    var appIdChild = '479'; // 子アプリのApp IDを指定
-    var appIdParent = '481'; // 親アプリのApp IDを指定
+  kintone.events.on('app.record.create.submit', function(event) {
+    var childRecord = event.record;
+    var parentAppId = 482; // 親アプリのApp IDを指定
 
-    // 親アプリに転記するデータを作成
-    var parentRecord = {};
+    var parentRecord = {
+      app: parentAppId,
+      record: {
+        // 親アプリに追加するレコードのフィールド値を子アプリからコピー
+        c_id: { value: childRecord.c_id.value },
+        c_name: { value: childRecord.c_name.value },
+        // 他のフィールドも同様にコピーする
+      }
+    };
 
-    // フィールドが存在するかチェックしてから転記
-    if (record['レコード番号']) {
-      parentRecord['レコード番号'] = { value: record['レコード番号'].value };
-    }
-    if (record['企業ID']) {
-      parentRecord['企業ID'] = { value: record['企業ID'].value };
-    }
-    if (record['会社名']) {
-      parentRecord['会社名'] = { value: record['会社名'].value };
-    }
-    // 必要なフィールドを追加
-
-    // 親アプリにレコードを追加
-    kintone.api('/k/v1/record', 'POST', { app: appIdParent, record: parentRecord })
-      .then(function () {
-        console.log('親アプリへの転記が完了しました');
-        return event;
-      })
-      .catch(function (error) {
-        console.error('エラーが発生しました:', error);
-      });
+    kintone.api(kintone.api.url('/k/v1/record', true), 'POST', parentRecord, function(resp) {
+      // 親アプリへのレコード追加が成功した場合の処理
+      console.log('Parent record added successfully:', resp);
+    }, function(error) {
+      // 親アプリへのレコード追加が失敗した場合の処理
+      console.error('Failed to add parent record:', error);
+    });
   });
+
 })();
