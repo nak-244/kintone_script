@@ -26,5 +26,6 @@
     });
   }
 
-  kintone.events.on('app.record.create.submit.success', onAfterInsert);
+  kintone.events.on('app.record.create.submit.success', onAfterInsert); //新しいレコードが作成され、送信が成功した直後
+
 })();
