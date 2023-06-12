@@ -3,7 +3,7 @@
 
   kintone.events.on('app.record.create.submit', function(event) {
     var childRecord = event.record;
-    var parentAppId = 482; // 親アプリのApp IDを指定
+    var parentAppId = 483; // 親アプリのApp IDを指定
 
     var parentRecord = {
       app: parentAppId,
