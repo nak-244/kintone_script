@@ -1,6 +1,6 @@
 # アプリで使用するスクリプト一覧
 ## 入力元（子アプリ）
-- record_copy.js
+- record_copy_table.js
 
 ## 閲覧用（親アプリ）
 - latest_record_show.js
