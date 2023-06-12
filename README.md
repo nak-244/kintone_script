@@ -20,3 +20,10 @@ OLPで使用するkintoneで使用する予定のスクリプトを保存する�
 ## 02_record_copy
 ### record_copy.js
 Aアプリで新規登録した内容を、Bアプリへ自動で登録するスクリプト。
+
+
+# MEMO
+### table_1
+- faci_name  
+- faci_tel
+- faci_address
